@@ -2,6 +2,11 @@ package com.codepath.android.lollipopexercise.adapters;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
+import android.support.v4.app.ActivityOptionsCompat;
+import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,14 +15,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.codepath.android.lollipopexercise.R;
+import com.codepath.android.lollipopexercise.activities.DetailsActivity;
 import com.codepath.android.lollipopexercise.models.Contact;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import java.util.List;
 
 // Provide the underlying view for an individual list item.
 public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.VH> {
-    private Activity mContext;
+    private  Activity mContext;
     private List<Contact> mContacts;
 
     public ContactsAdapter(Activity context, List<Contact> contacts) {
@@ -34,14 +41,62 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.VH> {
         View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_contact, parent, false);
         return new VH(itemView, mContext);
     }
+    // Define a listener for image loading
 
     // Display data at the specified position
     @Override
-    public void onBindViewHolder(VH holder, int position) {
+    public void onBindViewHolder(final VH holder, int position) {
+
+        // Use Picasso to get a callback with a Bitmap which can then
+        // be used to extract a vibrant color from the Palette.
+
+        // Define a listener for image loading
+        Target target = new Target() {
+            // Fires when Picasso finishes loading the bitmap for the target
+            @Override
+            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                // TODO 1. Insert the bitmap into the profile image view
+                holder.ivProfile.setImageBitmap(bitmap);
+
+                // TODO 2. Use generate() method from the Palette API to get the vibrant color from the bitmap
+                // Set the result as the background color for `R.id.vPalette` view containing the contact's name.
+
+                // This is the quick and easy integration path.
+// May not be optimal (since you're dipping in and out of threads)
+                Palette.from(bitmap).maximumColorCount(24).generate(new Palette.PaletteAsyncListener() {
+                    @Override
+                    public void onGenerated(Palette palette) {
+                        // Get the "vibrant" color swatch based on the bitmap
+                        Palette.Swatch vibrant = palette.getVibrantSwatch();
+                        if (vibrant != null) {
+                            // Set the background color of a layout based on the vibrant color
+                            holder.vPalette.setBackgroundColor(vibrant.getRgb());
+                            // Update the title TextView with the proper text color
+                            holder.tvName.setTextColor(vibrant.getTitleTextColor());
+                        }
+                    }
+                });
+
+
+            }
+
+            // Fires if bitmap fails to load
+            @Override
+            public void onBitmapFailed(Drawable errorDrawable) {
+
+            }
+
+            @Override
+            public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+            }
+        };
         Contact contact = mContacts.get(position);
         holder.rootView.setTag(contact);
         holder.tvName.setText(contact.getName());
-        Picasso.with(mContext).load(contact.getThumbnailDrawable()).fit().centerCrop().into(holder.ivProfile);
+        holder.ivProfile.setTag(target);
+        Picasso.with(mContext).load(contact.getThumbnailDrawable()).into(target);
+        //Picasso.with(mContext).load(contact.getThumbnailDrawable()).fit().centerCrop().into(holder.ivProfile);
     }
 
     @Override
@@ -70,7 +125,12 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.VH> {
                     final Contact contact = (Contact)v.getTag();
                     if (contact != null) {
                         // Fire an intent when a contact is selected
+                        Intent i = new Intent(context,DetailsActivity.class);
                         // Pass contact object in the bundle and populate details activity.
+                        i.putExtra("EXTRA_CONTACT",contact);
+                        ActivityOptionsCompat options = ActivityOptionsCompat.
+                                makeSceneTransitionAnimation((Activity)context, (View)ivProfile, "profile");
+                        context.startActivity(i,options.toBundle());
                     }
                 }
             });

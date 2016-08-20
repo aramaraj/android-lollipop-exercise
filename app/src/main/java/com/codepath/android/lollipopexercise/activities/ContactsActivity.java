@@ -1,11 +1,13 @@
 package com.codepath.android.lollipopexercise.activities;
 
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.codepath.android.lollipopexercise.R;
 import com.codepath.android.lollipopexercise.adapters.ContactsAdapter;
@@ -24,7 +26,10 @@ public class ContactsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contacts);
 
-        // Find RecyclerView and bind to adapter
+
+
+
+
         rvContacts = (RecyclerView) findViewById(R.id.rvContacts);
 
         // allows for optimizations
@@ -60,6 +65,22 @@ public class ContactsActivity extends AppCompatActivity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
+        Snackbar.make(findViewById(R.id.rlMainContent),"hi",Snackbar.LENGTH_INDEFINITE)
+                .setAction("UNDO", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        contacts.remove(0);
+                        mAdapter.notifyItemInserted(0);
+
+                    }
+                }).show();
+
+        Contact c = Contact.getRandomContact(getApplicationContext());
+        contacts.add(0, c);
+// Notify the adapter that an item was inserted at position 0
+
+        mAdapter.notifyItemInserted(0);  // contacts.size() - 1 is the last element position
+        rvContacts.scrollToPosition(0); // update based on adapter
 
         return super.onOptionsItemSelected(item);
     }
